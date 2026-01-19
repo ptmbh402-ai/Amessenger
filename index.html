@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Private Message</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background:
+        linear-gradient(rgba(255,182,193,0.75), rgba(255,182,193,0.75)),
+        url('https://images.unsplash.com/photo-1580281657527-47f249e8f1df');
+      background-size: cover;
+      background-position: center;
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .box {
+      width: 350px;
+      background: rgba(255, 255, 255, 0.92);
+      padding: 26px;
+      border-radius: 14px;
+      box-shadow: 0 12px 35px rgba(0,0,0,0.25);
+      color: #333;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 12px;
+      color: #d6336c;
+    }
+
+    input, textarea, button {
+      width: 100%;
+      margin-top: 10px;
+      padding: 11px;
+      border-radius: 8px;
+      border: 1px solid #f1c0d0;
+      font-size: 14px;
+    }
+
+    textarea {
+      resize: none;
+      height: 110px;
+    }
+
+    button {
+      background: #f06595;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+    }
+
+    button:hover {
+      background: #e64980;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .note {
+      font-size: 12px;
+      opacity: 0.8;
+      text-align: center;
+      margin-top: 8px;
+      color: #555;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="box">
+    <h2>💗 Secret Message</h2>
+
+    <div id="login">
+      <input type="password" id="password" placeholder="Enter password" />
+      <button onclick="unlock()">Unlock</button>
+    </div>
+
+    <div id="editor" class="hidden">
+      <textarea id="message" placeholder="Write your message here..."></textarea>
+      <button onclick="sendMessage()">Save Message</button>
+      <button onclick="readMessage()">Read Message</button>
+      <p class="note">Only you two can read this 💕</p>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCnyhV58WzDSR4kSPuH6aC8ojcfCW2qtgk",
+      authDomain: "messenger-88e41.firebaseapp.com",
+      databaseURL: "https://messenger-88e41-default-rtdb.firebaseio.com",
+      projectId: "messenger-88e41",
+      storageBucket: "messenger-88e41.firebasestorage.app",
+      messagingSenderId: "235166258459",
+      appId: "1:235166258459:web:5818f717af9dd3e8e4efbe"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    let SECRET = "";
+
+    window.unlock = () => {
+      SECRET = document.getElementById('password').value;
+      if (SECRET.length < 4) {
+        alert('Password too short');
+        return;
+      }
+      document.getElementById('login').classList.add('hidden');
+      document.getElementById('editor').classList.remove('hidden');
+    };
+
+    window.sendMessage = async () => {
+      const msg = document.getElementById('message').value;
+      const encrypted = CryptoJS.AES.encrypt(msg, SECRET).toString();
+      await set(ref(db, 'secret/message'), encrypted);
+      alert('Message saved securely 💗');
+    };
+
+    window.readMessage = async () => {
+      const snap = await get(ref(db, 'secret/message'));
+      if (!snap.exists()) {
+        alert('No message found');
+        return;
+      }
+      try {
+        const decrypted = CryptoJS.AES.decrypt(snap.val(), SECRET).toString(CryptoJS.enc.Utf8);
+        if (!decrypted) throw '';
+        document.getElementById('message').value = decrypted;
+      } catch {
+        alert('Wrong password');
+      }
+    };
+  </script>
+</body>
+</html>
